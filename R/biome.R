@@ -323,7 +323,6 @@ get_biome <- function(latitude,
     if(biome_code %in% c("APX", "GX")) {
       if(res$fao == "NA") {
         #TODO: select a correct or best guess biome_code when res$fao is unavailable
-        print("Error, no value found in res$fao for selected coordinates.")
         return('{ "Message" :"Error, no value found in res$fao for selected coordinates.", "code" :"404"}')
       }
       else {
@@ -404,8 +403,35 @@ get_biome <- function(latitude,
     ### Add to our list of biome data
     # Add to the list of exclusions here if needed. If all exclusions don't
     # apply, the biome is added to the biome_data.
+
+
+    #**** We can make changes here to not add biome_default to biome_data if it doesn't meet the conditions.
+    # This will prevent display on the frontend
+    require_all <- c(
+      "OM_ag",
+      "OM_root",
+      "OM_wood",
+      "OM_litter",
+      "OM_SOM",
+      "F_CO2",
+      "F_CH4",
+      "F_N2O"
+    )
+
+    exclude <- FALSE
+
+    for (e in require_all ) {
+      if(is.null(biome_default[e])) {
+        exclude <- TRUE
+      } else if(biome_default[e] == "NaN") {
+        exclude <- TRUE
+      }
+    }
+
     if(biome_default$vegtype == "Savanna" && biome_default$code != "S1") {
       #dont include if savannah and not S1 since we don't have data.
+    } else if(exclude) {
+      cat("skipping:: ", biome_default$vegtype, "\r\n")
     } else {
       biome_data[[biome_type]][[biome]] <- biome_default
     }
